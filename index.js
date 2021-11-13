@@ -18,6 +18,7 @@ async function run(){
         const reviewCollection = database.collection('reviews');
         const productCollection = database.collection('products');
         const orderCollection = database.collection('orders');
+        const userCollection = database.collection('users');
 
         app.get('/reviews', async(req,res) =>{
             const cursor = reviewCollection.find({});
@@ -64,6 +65,23 @@ async function run(){
         const products = await cursor.toArray();
         res.send(products);
     })
+    app.get('/users', async(req,res) =>{
+        const cursor = userCollection.find({});
+        const users = await cursor.toArray();
+        res.send(users);
+    })
+
+    app.get('/users/:email', async(req,res) =>{
+        const email = req.params.email;
+        const query = {email:email};
+        const user = await userCollection.findOne(query);
+        let isAdmin = false;
+        if(user?.role === 'admin'){
+            isAdmin = true;
+        }
+        res.json({admin:isAdmin});
+
+    })
 
     app.post('/products',async(req,res) =>{
         const product = req.body;
@@ -72,10 +90,26 @@ async function run(){
         console.log('hit api');
     })
 
+    app.post('/users', async(req,res) => {
+        const users = req.body;
+        const result = await userCollection.insertOne(users);
+        res.json(result);
+        console.log('user added')
+    })
+
     app.post('/orders',async(req,res) =>{
         const order = req.body;
         const result = await orderCollection.insertOne(order);
         res.json(result);
+    })
+
+    app.put('/users/admin', async(req,res) => {
+            const user = req.body;
+            const filter = {email: user.email};
+            const updateDoc = {$set: { role: 'admin' }};
+            const result = await userCollection.updateOne(filter,updateDoc);
+            res.json(result);
+            console.log('hittedd')
     })
 
      //Delete api
